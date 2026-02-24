@@ -6,6 +6,7 @@ import {
   PieChart, Pie, Cell, LineChart, Line, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart,
 } from "recharts";
+import WasteMap, { WasteLocation } from "@/components/WasteMap";
 
 const widgets = [
   { label: "Waste Collected Today", value: "847", unit: "tons", icon: Leaf, change: "+12%" },
@@ -51,9 +52,29 @@ const carbonData = [
 ];
 
 const chartTooltipStyle = {
-  contentStyle: { background: "hsl(220, 18%, 10%)", border: "1px solid hsl(220, 14%, 18%)", borderRadius: "8px", color: "hsl(150, 20%, 92%)" },
-  labelStyle: { color: "hsl(150, 20%, 85%)" },
+  contentStyle: { background: "#fff", border: "1px solid hsl(220, 13%, 88%)", borderRadius: "8px", color: "#1a1a2e" },
+  labelStyle: { color: "#333" },
 };
+
+const mapLocations: WasteLocation[] = [
+  { lat: 28.6139, lng: 77.209, name: "Central Delhi Hub", wasteType: "Mixed", quantity: 120 },
+  { lat: 28.6329, lng: 77.2195, name: "Connaught Place Zone", wasteType: "Plastic", quantity: 45 },
+  { lat: 28.5922, lng: 77.2315, name: "South Delhi Sector", wasteType: "Organic", quantity: 85 },
+  { lat: 28.6353, lng: 77.2250, name: "Karol Bagh Market", wasteType: "E-waste", quantity: 18 },
+  { lat: 28.6508, lng: 77.2310, name: "Civil Lines", wasteType: "Metal", quantity: 32 },
+  { lat: 28.6100, lng: 77.2300, name: "Lodhi Colony", wasteType: "Glass", quantity: 22 },
+  { lat: 28.5800, lng: 77.2100, name: "Saket Area", wasteType: "Organic", quantity: 65 },
+];
+
+const heatPoints = [
+  { lat: 28.6139, lng: 77.209, intensity: 0.9 },
+  { lat: 28.6329, lng: 77.2195, intensity: 0.5 },
+  { lat: 28.5922, lng: 77.2315, intensity: 0.7 },
+  { lat: 28.6508, lng: 77.2310, intensity: 0.3 },
+  { lat: 28.5800, lng: 77.2100, intensity: 0.6 },
+  { lat: 28.6250, lng: 77.1900, intensity: 0.4 },
+  { lat: 28.6400, lng: 77.2400, intensity: 0.8 },
+];
 
 export default function Dashboard() {
   return (
@@ -83,14 +104,30 @@ export default function Dashboard() {
         ))}
       </div>
 
+      {/* Map Section */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="glass-card p-6 mb-6">
+        <h3 className="font-display font-semibold text-foreground mb-4">Waste Collection Heatmap & Locations</h3>
+        <WasteMap locations={mapLocations} heatPoints={heatPoints} height="380px" />
+        <div className="flex flex-wrap gap-4 mt-4">
+          {["Organic", "Plastic", "Metal", "Glass", "E-waste", "Mixed"].map((t) => {
+            const colors: Record<string, string> = { Organic: "#10b981", Plastic: "#3b82f6", Metal: "#f59e0b", Glass: "#8b5cf6", "E-waste": "#ef4444", Mixed: "#6b7280" };
+            return (
+              <div key={t} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <div className="w-3 h-3 rounded-full" style={{ background: colors[t] }} />
+                {t}
+              </div>
+            );
+          })}
+        </div>
+      </motion.div>
+
       {/* Charts Row 1 */}
       <div className="grid lg:grid-cols-3 gap-6 mb-6">
-        {/* Waste Distribution Pie */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="glass-card p-6">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="glass-card p-6">
           <h3 className="font-display font-semibold text-foreground mb-4">Waste Distribution</h3>
           <ResponsiveContainer width="100%" height={220}>
             <PieChart>
-              <Pie data={wasteTypes} cx="50%" cy="50%" innerRadius={55} outerRadius={85} dataKey="value" strokeWidth={2} stroke="hsl(220, 18%, 10%)">
+              <Pie data={wasteTypes} cx="50%" cy="50%" innerRadius={55} outerRadius={85} dataKey="value" strokeWidth={2} stroke="#fff">
                 {wasteTypes.map((entry, i) => <Cell key={i} fill={entry.color} />)}
               </Pie>
               <Tooltip {...chartTooltipStyle} />
@@ -106,12 +143,11 @@ export default function Dashboard() {
           </div>
         </motion.div>
 
-        {/* Daily Waste Trend */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="glass-card p-6 lg:col-span-2">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="glass-card p-6 lg:col-span-2">
           <h3 className="font-display font-semibold text-foreground mb-4">Daily Waste Generation</h3>
           <ResponsiveContainer width="100%" height={260}>
             <AreaChart data={dailyWaste}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 14%, 18%)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 88%)" />
               <XAxis dataKey="day" stroke="hsl(220, 10%, 50%)" fontSize={12} />
               <YAxis stroke="hsl(220, 10%, 50%)" fontSize={12} />
               <Tooltip {...chartTooltipStyle} />
@@ -125,12 +161,11 @@ export default function Dashboard() {
 
       {/* Charts Row 2 */}
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Energy Forecast */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="glass-card p-6">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="glass-card p-6">
           <h3 className="font-display font-semibold text-foreground mb-4">Energy Generation Forecast</h3>
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={energyForecast}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 14%, 18%)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 88%)" />
               <XAxis dataKey="month" stroke="hsl(220, 10%, 50%)" fontSize={12} />
               <YAxis stroke="hsl(220, 10%, 50%)" fontSize={12} tickFormatter={(v) => `${v / 1000}k`} />
               <Tooltip {...chartTooltipStyle} formatter={(v: number) => `${(v / 1000).toFixed(0)}k kWh`} />
@@ -140,12 +175,11 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </motion.div>
 
-        {/* Carbon Reduction */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="glass-card p-6">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} className="glass-card p-6">
           <h3 className="font-display font-semibold text-foreground mb-4">Carbon Reduction Tracker</h3>
           <ResponsiveContainer width="100%" height={260}>
             <LineChart data={carbonData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 14%, 18%)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 88%)" />
               <XAxis dataKey="week" stroke="hsl(220, 10%, 50%)" fontSize={12} />
               <YAxis stroke="hsl(220, 10%, 50%)" fontSize={12} unit=" t" />
               <Tooltip {...chartTooltipStyle} />

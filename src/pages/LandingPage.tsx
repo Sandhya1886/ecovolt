@@ -52,8 +52,8 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="relative min-h-[90vh] flex items-center justify-center">
         <div className="absolute inset-0">
-          <img src={heroBg} alt="Smart city waste-to-energy" className="w-full h-full object-cover opacity-30" />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background" />
+          <img src={heroBg} alt="Smart city waste-to-energy" className="w-full h-full object-cover opacity-20" />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/70 to-background" />
         </div>
         <div className="absolute inset-0 grid-pattern opacity-20" />
         
