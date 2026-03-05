@@ -1,6 +1,8 @@
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  Zap, Truck, Leaf, TrendingDown, Gauge,
+  Zap, Truck, Leaf, TrendingDown, Gauge, PieChart as PieIcon,
+  BarChart3, LineChart as LineIcon, Activity, ChevronDown,
 } from "lucide-react";
 import {
   PieChart, Pie, Cell, LineChart, Line, BarChart, Bar,
@@ -52,8 +54,8 @@ const carbonData = [
 ];
 
 const chartTooltipStyle = {
-  contentStyle: { background: "#fff", border: "1px solid hsl(220, 13%, 88%)", borderRadius: "8px", color: "#1a1a2e" },
-  labelStyle: { color: "#333" },
+  contentStyle: { background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "10px", color: "hsl(var(--foreground))", fontSize: 13 },
+  labelStyle: { color: "hsl(var(--muted-foreground))" },
 };
 
 const mapLocations: WasteLocation[] = [
@@ -76,27 +78,42 @@ const heatPoints = [
   { lat: 28.6400, lng: 77.2400, intensity: 0.8 },
 ];
 
+type SectionId = "distribution" | "daily" | "energy" | "carbon";
+
+const sections: { id: SectionId; title: string; desc: string; icon: typeof PieIcon }[] = [
+  { id: "distribution", title: "Waste Distribution", desc: "Breakdown of collected waste by material category", icon: PieIcon },
+  { id: "daily", title: "Daily Waste Generation", desc: "Weekly trend of waste collected across all categories", icon: Activity },
+  { id: "energy", title: "Energy Generation Forecast", desc: "Actual vs predicted energy output by month", icon: BarChart3 },
+  { id: "carbon", title: "Carbon Reduction Tracker", desc: "Weekly CO₂ emissions reduced through waste-to-energy", icon: LineIcon },
+];
+
 export default function Dashboard() {
+  const [expanded, setExpanded] = useState<SectionId | null>(null);
+
+  const toggle = (id: SectionId) => setExpanded(expanded === id ? null : id);
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
       <div className="mb-8">
         <h1 className="font-display text-3xl font-bold text-foreground">Dashboard</h1>
         <p className="text-muted-foreground mt-1">Real-time waste-to-energy analytics</p>
       </div>
 
-      {/* Widgets */}
+      {/* KPI Widgets */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         {widgets.map((w, i) => (
           <motion.div
             key={i}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.08 }}
-            className="glass-card p-4 hover:glow-border transition-shadow duration-300"
+            transition={{ delay: i * 0.06 }}
+            className="rounded-2xl border border-border bg-card p-4 shadow-sm hover:shadow-md transition-shadow"
           >
             <div className="flex items-center justify-between mb-3">
-              <w.icon className="w-5 h-5 text-primary" />
-              <span className="text-xs font-medium text-primary">{w.change}</span>
+              <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                <w.icon className="w-4 h-4 text-primary" />
+              </div>
+              <span className="text-xs font-semibold text-primary">{w.change}</span>
             </div>
             <div className="font-display text-2xl font-bold text-foreground">{w.value}</div>
             <div className="text-xs text-muted-foreground mt-1">{w.label}</div>
@@ -104,10 +121,11 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Map Section */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="glass-card p-6 mb-6">
-        <h3 className="font-display font-semibold text-foreground mb-4">Waste Collection Heatmap & Locations</h3>
-        <WasteMap locations={mapLocations} heatPoints={heatPoints} height="380px" />
+      {/* Map */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="rounded-2xl border border-border bg-card p-5 mb-6 shadow-sm">
+        <h3 className="font-display font-semibold text-foreground mb-1">Waste Collection Heatmap</h3>
+        <p className="text-xs text-muted-foreground mb-4">Click markers for waste type and quantity details</p>
+        <WasteMap locations={mapLocations} heatPoints={heatPoints} height="360px" />
         <div className="flex flex-wrap gap-4 mt-4">
           {["Organic", "Plastic", "Metal", "Glass", "E-waste", "Mixed"].map((t) => {
             const colors: Record<string, string> = { Organic: "#10b981", Plastic: "#3b82f6", Metal: "#f59e0b", Glass: "#8b5cf6", "E-waste": "#ef4444", Mixed: "#6b7280" };
@@ -121,73 +139,122 @@ export default function Dashboard() {
         </div>
       </motion.div>
 
-      {/* Charts Row 1 */}
-      <div className="grid lg:grid-cols-3 gap-6 mb-6">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="glass-card p-6">
-          <h3 className="font-display font-semibold text-foreground mb-4">Waste Distribution</h3>
-          <ResponsiveContainer width="100%" height={220}>
+      {/* Accordion Chart Sections */}
+      <div className="space-y-3">
+        {sections.map((section, i) => {
+          const isOpen = expanded === section.id;
+          return (
+            <motion.div
+              key={section.id}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 + i * 0.06 }}
+              className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden"
+            >
+              <button
+                onClick={() => toggle(section.id)}
+                className="w-full flex items-center gap-4 p-5 text-left hover:bg-accent/50 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <section.icon className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-display font-semibold text-foreground text-[15px]">{section.title}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">{section.desc}</p>
+                </div>
+                <motion.div
+                  animate={{ rotate: isOpen ? 180 : 0 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                </motion.div>
+              </button>
+
+              <AnimatePresence initial={false}>
+                {isOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className="overflow-hidden"
+                  >
+                    <div className="px-5 pb-5">
+                      <ChartContent section={section.id} />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ChartContent({ section }: { section: SectionId }) {
+  switch (section) {
+    case "distribution":
+      return (
+        <div className="flex flex-col md:flex-row items-center gap-6">
+          <ResponsiveContainer width="100%" height={240}>
             <PieChart>
-              <Pie data={wasteTypes} cx="50%" cy="50%" innerRadius={55} outerRadius={85} dataKey="value" strokeWidth={2} stroke="#fff">
+              <Pie data={wasteTypes} cx="50%" cy="50%" innerRadius={55} outerRadius={90} dataKey="value" strokeWidth={2} stroke="hsl(var(--card))">
                 {wasteTypes.map((entry, i) => <Cell key={i} fill={entry.color} />)}
               </Pie>
               <Tooltip {...chartTooltipStyle} />
             </PieChart>
           </ResponsiveContainer>
-          <div className="flex flex-wrap gap-3 mt-2">
+          <div className="flex flex-wrap md:flex-col gap-3">
             {wasteTypes.map((t, i) => (
-              <div key={i} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ background: t.color }} />
-                {t.name} {t.value}%
+              <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="w-3 h-3 rounded-full" style={{ background: t.color }} />
+                <span>{t.name}</span>
+                <span className="font-semibold text-foreground">{t.value}%</span>
               </div>
             ))}
           </div>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="glass-card p-6 lg:col-span-2">
-          <h3 className="font-display font-semibold text-foreground mb-4">Daily Waste Generation</h3>
-          <ResponsiveContainer width="100%" height={260}>
-            <AreaChart data={dailyWaste}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 88%)" />
-              <XAxis dataKey="day" stroke="hsl(220, 10%, 50%)" fontSize={12} />
-              <YAxis stroke="hsl(220, 10%, 50%)" fontSize={12} />
-              <Tooltip {...chartTooltipStyle} />
-              <Area type="monotone" dataKey="organic" stackId="1" fill="hsl(160, 84%, 39%)" fillOpacity={0.6} stroke="hsl(160, 84%, 39%)" />
-              <Area type="monotone" dataKey="plastic" stackId="1" fill="hsl(200, 80%, 50%)" fillOpacity={0.6} stroke="hsl(200, 80%, 50%)" />
-              <Area type="monotone" dataKey="metal" stackId="1" fill="hsl(38, 92%, 50%)" fillOpacity={0.4} stroke="hsl(38, 92%, 50%)" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </motion.div>
-      </div>
-
-      {/* Charts Row 2 */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="glass-card p-6">
-          <h3 className="font-display font-semibold text-foreground mb-4">Energy Generation Forecast</h3>
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={energyForecast}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 88%)" />
-              <XAxis dataKey="month" stroke="hsl(220, 10%, 50%)" fontSize={12} />
-              <YAxis stroke="hsl(220, 10%, 50%)" fontSize={12} tickFormatter={(v) => `${v / 1000}k`} />
-              <Tooltip {...chartTooltipStyle} formatter={(v: number) => `${(v / 1000).toFixed(0)}k kWh`} />
-              <Bar dataKey="actual" fill="hsl(160, 84%, 39%)" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="predicted" fill="hsl(200, 80%, 50%)" radius={[4, 4, 0, 0]} opacity={0.6} />
-            </BarChart>
-          </ResponsiveContainer>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} className="glass-card p-6">
-          <h3 className="font-display font-semibold text-foreground mb-4">Carbon Reduction Tracker</h3>
-          <ResponsiveContainer width="100%" height={260}>
-            <LineChart data={carbonData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 88%)" />
-              <XAxis dataKey="week" stroke="hsl(220, 10%, 50%)" fontSize={12} />
-              <YAxis stroke="hsl(220, 10%, 50%)" fontSize={12} unit=" t" />
-              <Tooltip {...chartTooltipStyle} />
-              <Line type="monotone" dataKey="reduced" stroke="hsl(160, 84%, 39%)" strokeWidth={3} dot={{ fill: "hsl(160, 84%, 39%)", r: 4 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </motion.div>
-      </div>
-    </div>
-  );
+        </div>
+      );
+    case "daily":
+      return (
+        <ResponsiveContainer width="100%" height={280}>
+          <AreaChart data={dailyWaste}>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+            <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+            <Tooltip {...chartTooltipStyle} />
+            <Area type="monotone" dataKey="organic" stackId="1" fill="hsl(160, 84%, 39%)" fillOpacity={0.5} stroke="hsl(160, 84%, 39%)" />
+            <Area type="monotone" dataKey="plastic" stackId="1" fill="hsl(200, 80%, 50%)" fillOpacity={0.5} stroke="hsl(200, 80%, 50%)" />
+            <Area type="monotone" dataKey="metal" stackId="1" fill="hsl(38, 92%, 50%)" fillOpacity={0.4} stroke="hsl(38, 92%, 50%)" />
+          </AreaChart>
+        </ResponsiveContainer>
+      );
+    case "energy":
+      return (
+        <ResponsiveContainer width="100%" height={280}>
+          <BarChart data={energyForecast}>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+            <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(v) => `${v / 1000}k`} />
+            <Tooltip {...chartTooltipStyle} formatter={(v: number) => `${(v / 1000).toFixed(0)}k kWh`} />
+            <Bar dataKey="actual" fill="hsl(160, 84%, 39%)" radius={[6, 6, 0, 0]} name="Actual" />
+            <Bar dataKey="predicted" fill="hsl(200, 80%, 50%)" radius={[6, 6, 0, 0]} opacity={0.6} name="Predicted" />
+          </BarChart>
+        </ResponsiveContainer>
+      );
+    case "carbon":
+      return (
+        <ResponsiveContainer width="100%" height={280}>
+          <LineChart data={carbonData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis dataKey="week" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+            <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} unit=" t" />
+            <Tooltip {...chartTooltipStyle} />
+            <Line type="monotone" dataKey="reduced" stroke="hsl(160, 84%, 39%)" strokeWidth={3} dot={{ fill: "hsl(160, 84%, 39%)", r: 5 }} activeDot={{ r: 7 }} />
+          </LineChart>
+        </ResponsiveContainer>
+      );
+  }
 }

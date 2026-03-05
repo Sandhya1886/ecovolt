@@ -78,7 +78,7 @@ export default function LandingPage() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link to="/dashboard">
                 <Button size="lg" className="gradient-primary text-primary-foreground font-semibold px-8 h-12 text-base hover:opacity-90 transition-opacity">
-                  Launch Dashboard
+                  Get Started
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
