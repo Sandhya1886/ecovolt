@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { 
   Zap, BarChart3, Map, Brain, FileText, Leaf, 
-  Menu, X, TrendingUp, AlertTriangle
+  Menu, X, TrendingUp, AlertTriangle, Settings, User
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
   { path: "/", label: "Home", icon: Zap },
@@ -14,11 +15,13 @@ const navItems = [
   { path: "/route-optimization", label: "Routes", icon: Map },
   { path: "/landfill-forecast", label: "Landfill", icon: AlertTriangle },
   { path: "/reports", label: "Reports", icon: FileText },
+  { path: "/settings", label: "Settings", icon: Settings },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user } = useAuth();
 
   return (
     <div className="min-h-screen bg-background">
@@ -38,26 +41,25 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               {navItems.map((item) => {
                 const active = location.pathname === item.path;
                 return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-1.5
-                      ${active 
-                        ? "bg-primary/15 text-primary" 
-                        : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                      }`}
-                  >
+                  <Link key={item.path} to={item.path} className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-1.5 ${active ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
                     <item.icon className="w-4 h-4" />
                     {item.label}
                   </Link>
                 );
               })}
+              {user ? (
+                <Link to="/settings" className="ml-2 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-sm font-medium">
+                  <User className="w-4 h-4" />
+                  <span className="max-w-[80px] truncate">{user.name}</span>
+                </Link>
+              ) : (
+                <Link to="/login" className="ml-2 px-4 py-1.5 rounded-lg gradient-primary text-primary-foreground text-sm font-medium">
+                  Sign In
+                </Link>
+              )}
             </div>
 
-            <button
-              className="md:hidden text-foreground"
-              onClick={() => setMobileOpen(!mobileOpen)}
-            >
+            <button className="md:hidden text-foreground" onClick={() => setMobileOpen(!mobileOpen)}>
               {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
@@ -65,23 +67,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         <AnimatePresence>
           {mobileOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="md:hidden overflow-hidden border-t border-border/50"
-            >
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="md:hidden overflow-hidden border-t border-border/50">
               <div className="px-4 py-3 space-y-1">
                 {navItems.map((item) => {
                   const active = location.pathname === item.path;
                   return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      onClick={() => setMobileOpen(false)}
-                      className={`block px-3 py-2 rounded-lg text-sm font-medium transition-all
-                        ${active ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground"}`}
-                    >
+                    <Link key={item.path} to={item.path} onClick={() => setMobileOpen(false)} className={`block px-3 py-2 rounded-lg text-sm font-medium transition-all ${active ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground"}`}>
                       <span className="flex items-center gap-2">
                         <item.icon className="w-4 h-4" />
                         {item.label}
@@ -89,6 +80,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     </Link>
                   );
                 })}
+                {!user && (
+                  <Link to="/login" onClick={() => setMobileOpen(false)} className="block px-3 py-2 rounded-lg text-sm font-medium text-primary">
+                    Sign In
+                  </Link>
+                )}
               </div>
             </motion.div>
           )}
@@ -97,13 +93,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       <main className="pt-16">
         <AnimatePresence mode="wait">
-          <motion.div
-            key={location.pathname}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.3 }}
-          >
+          <motion.div key={location.pathname} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3 }}>
             {children}
           </motion.div>
         </AnimatePresence>

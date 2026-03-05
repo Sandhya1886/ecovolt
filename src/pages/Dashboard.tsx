@@ -2,13 +2,14 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Zap, Truck, Leaf, TrendingDown, Gauge, PieChart as PieIcon,
-  BarChart3, LineChart as LineIcon, Activity, ChevronDown,
+  BarChart3, LineChart as LineIcon, Activity, ChevronDown, User,
 } from "lucide-react";
 import {
   PieChart, Pie, Cell, LineChart, Line, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart,
 } from "recharts";
 import WasteMap, { WasteLocation } from "@/components/WasteMap";
+import { useAuth } from "@/contexts/AuthContext";
 
 const widgets = [
   { label: "Waste Collected Today", value: "847", unit: "tons", icon: Leaf, change: "+12%" },
@@ -89,11 +90,25 @@ const sections: { id: SectionId; title: string; desc: string; icon: typeof PieIc
 
 export default function Dashboard() {
   const [expanded, setExpanded] = useState<SectionId | null>(null);
-
+  const { user } = useAuth();
   const toggle = (id: SectionId) => setExpanded(expanded === id ? null : id);
+  const typeLabels: Record<string, string> = { municipality: "Municipality", citizen: "Citizen", company: "Company" };
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+      {/* User Info Banner */}
+      {user && (
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 rounded-2xl border border-border bg-card p-4 shadow-sm flex items-center gap-4">
+          <div className="w-11 h-11 rounded-xl gradient-primary flex items-center justify-center">
+            <User className="w-5 h-5 text-primary-foreground" />
+          </div>
+          <div>
+            <p className="font-display font-semibold text-foreground">Welcome back, {user.name}</p>
+            <p className="text-xs text-muted-foreground">{user.email} · {typeLabels[user.userType]}</p>
+          </div>
+        </motion.div>
+      )}
+
       <div className="mb-8">
         <h1 className="font-display text-3xl font-bold text-foreground">Dashboard</h1>
         <p className="text-muted-foreground mt-1">Real-time waste-to-energy analytics</p>
@@ -102,13 +117,7 @@ export default function Dashboard() {
       {/* KPI Widgets */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         {widgets.map((w, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.06 }}
-            className="rounded-2xl border border-border bg-card p-4 shadow-sm hover:shadow-md transition-shadow"
-          >
+          <motion.div key={i} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }} className="rounded-2xl border border-border bg-card p-4 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-3">
               <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
                 <w.icon className="w-4 h-4 text-primary" />
@@ -131,8 +140,7 @@ export default function Dashboard() {
             const colors: Record<string, string> = { Organic: "#10b981", Plastic: "#3b82f6", Metal: "#f59e0b", Glass: "#8b5cf6", "E-waste": "#ef4444", Mixed: "#6b7280" };
             return (
               <div key={t} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <div className="w-3 h-3 rounded-full" style={{ background: colors[t] }} />
-                {t}
+                <div className="w-3 h-3 rounded-full" style={{ background: colors[t] }} /> {t}
               </div>
             );
           })}
@@ -144,17 +152,8 @@ export default function Dashboard() {
         {sections.map((section, i) => {
           const isOpen = expanded === section.id;
           return (
-            <motion.div
-              key={section.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 + i * 0.06 }}
-              className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden"
-            >
-              <button
-                onClick={() => toggle(section.id)}
-                className="w-full flex items-center gap-4 p-5 text-left hover:bg-accent/50 transition-colors"
-              >
+            <motion.div key={section.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 + i * 0.06 }} className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+              <button onClick={() => toggle(section.id)} className="w-full flex items-center gap-4 p-5 text-left hover:bg-accent/50 transition-colors">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                   <section.icon className="w-5 h-5 text-primary" />
                 </div>
@@ -162,26 +161,14 @@ export default function Dashboard() {
                   <h3 className="font-display font-semibold text-foreground text-[15px]">{section.title}</h3>
                   <p className="text-xs text-muted-foreground mt-0.5">{section.desc}</p>
                 </div>
-                <motion.div
-                  animate={{ rotate: isOpen ? 180 : 0 }}
-                  transition={{ duration: 0.25 }}
-                >
+                <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.25 }}>
                   <ChevronDown className="w-5 h-5 text-muted-foreground" />
                 </motion.div>
               </button>
-
               <AnimatePresence initial={false}>
                 {isOpen && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
-                    className="overflow-hidden"
-                  >
-                    <div className="px-5 pb-5">
-                      <ChartContent section={section.id} />
-                    </div>
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3, ease: "easeInOut" }} className="overflow-hidden">
+                    <div className="px-5 pb-5"><ChartContent section={section.id} /></div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -199,12 +186,7 @@ function ChartContent({ section }: { section: SectionId }) {
       return (
         <div className="flex flex-col md:flex-row items-center gap-6">
           <ResponsiveContainer width="100%" height={240}>
-            <PieChart>
-              <Pie data={wasteTypes} cx="50%" cy="50%" innerRadius={55} outerRadius={90} dataKey="value" strokeWidth={2} stroke="hsl(var(--card))">
-                {wasteTypes.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-              </Pie>
-              <Tooltip {...chartTooltipStyle} />
-            </PieChart>
+            <PieChart><Pie data={wasteTypes} cx="50%" cy="50%" innerRadius={55} outerRadius={90} dataKey="value" strokeWidth={2} stroke="hsl(var(--card))">{wasteTypes.map((entry, i) => <Cell key={i} fill={entry.color} />)}</Pie><Tooltip {...chartTooltipStyle} /></PieChart>
           </ResponsiveContainer>
           <div className="flex flex-wrap md:flex-col gap-3">
             {wasteTypes.map((t, i) => (
