@@ -343,7 +343,10 @@ export default function Classification() {
                     {wasteCategories.map((cat) => (
                       <button
                         key={cat.key}
-                        onClick={() => setSelectedCategory(cat.key)}
+                        onClick={() => {
+                          setSelectedCategory(cat.key);
+                          setResult(wasteResults[cat.key]);
+                        }}
                         className={`rounded-xl p-3 text-left transition-all border ${
                           selectedCategory === cat.key
                             ? "border-primary bg-primary/5 shadow-sm"
