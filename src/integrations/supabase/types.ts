@@ -14,7 +14,99 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      classifications: {
+        Row: {
+          confidence: number
+          created_at: string
+          energy_kwh: number
+          id: string
+          image_name: string | null
+          method: string
+          user_id: string
+          waste_type: string
+        }
+        Insert: {
+          confidence: number
+          created_at?: string
+          energy_kwh: number
+          id?: string
+          image_name?: string | null
+          method: string
+          user_id: string
+          waste_type: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          energy_kwh?: number
+          id?: string
+          image_name?: string | null
+          method?: string
+          user_id?: string
+          waste_type?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+          user_type: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+          user_type?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+          user_type?: string
+        }
+        Relationships: []
+      }
+      waste_reports: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          metrics: string | null
+          report_data: Json | null
+          report_type: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          metrics?: string | null
+          report_data?: Json | null
+          report_type: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          metrics?: string | null
+          report_data?: Json | null
+          report_type?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

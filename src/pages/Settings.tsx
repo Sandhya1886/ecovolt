@@ -1,19 +1,21 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { User, Mail, Building2, LogOut, Shield, Bell, Palette } from "lucide-react";
+import { User, Mail, Building2, LogOut, Shield, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 export default function Settings() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  const handleSignOut = () => {
-    logout();
+  const handleSignOut = async () => {
+    await logout();
+    toast.success("Signed out successfully");
     navigate("/");
   };
 
-  const typeLabels = { municipality: "Municipality", citizen: "Citizen", company: "Company" };
+  const typeLabels: Record<string, string> = { municipality: "Municipality", citizen: "Citizen", company: "Company" };
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
@@ -77,9 +79,6 @@ export default function Settings() {
           <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
             <Shield className="w-5 h-5 text-primary" /> Security
           </h3>
-          <Button variant="outline" className="w-full border-border text-muted-foreground hover:bg-secondary mb-3">
-            Change Password
-          </Button>
           <Button variant="outline" className="w-full border-destructive/30 text-destructive hover:bg-destructive/10" onClick={handleSignOut}>
             <LogOut className="w-4 h-4 mr-2" /> Sign Out
           </Button>
