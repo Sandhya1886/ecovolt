@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Leaf, Mail, Lock, User, Building2, Users, Briefcase, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { Leaf, Mail, Lock, User, Building2, Users, Briefcase, ArrowRight, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const userTypes = [
   { value: "municipality" as const, label: "Municipality", icon: Building2, desc: "City or government body" },
@@ -20,14 +21,36 @@ export default function Login() {
   const [name, setName] = useState("");
   const [userType, setUserType] = useState<"municipality" | "citizen" | "company">("citizen");
   const [showPass, setShowPass] = useState(false);
-  const { login } = useAuth();
+  const [submitting, setSubmitting] = useState(false);
+  const { login, signup } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) return;
-    login({ email, name: name || email.split("@")[0], userType });
-    navigate("/dashboard");
+    setSubmitting(true);
+
+    try {
+      if (isSignup) {
+        const { error } = await signup(email, password, name || email.split("@")[0], userType);
+        if (error) {
+          toast.error(error);
+        } else {
+          toast.success("Account created! Check your email to confirm, or sign in directly.");
+          navigate("/dashboard");
+        }
+      } else {
+        const { error } = await login(email, password);
+        if (error) {
+          toast.error(error);
+        } else {
+          toast.success("Welcome back!");
+          navigate("/dashboard");
+        }
+      }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -37,7 +60,6 @@ export default function Login() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md"
       >
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center mx-auto mb-4">
             <Leaf className="w-8 h-8 text-primary-foreground" />
@@ -74,7 +96,7 @@ export default function Login() {
               <Label className="text-muted-foreground text-sm">Password</Label>
               <div className="relative mt-1">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input type={showPass ? "text" : "password"} placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 pr-10 bg-secondary border-border" required />
+                <Input type={showPass ? "text" : "password"} placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 pr-10 bg-secondary border-border" required minLength={6} />
                 <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                   {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -104,7 +126,8 @@ export default function Login() {
               </div>
             )}
 
-            <Button type="submit" className="w-full gradient-primary text-primary-foreground font-semibold h-11">
+            <Button type="submit" className="w-full gradient-primary text-primary-foreground font-semibold h-11" disabled={submitting}>
+              {submitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               {isSignup ? "Create Account" : "Sign In"} <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </form>
